@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Electrica - Motores</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background:#1a1a2e; color:#eee; padding:10px; }
+.header { text-align:center; padding:15px 0; }
+.header h1 { font-size:20px; color:#f7d632; }
+.header p { font-size:12px; color:#999; margin-top:5px; }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:15px; }
+.tab { flex:1; min-width:70px; padding:10px 5px; background:#16213e; border-radius:6px; text-align:center; font-size:11px; cursor:pointer; border:2px solid transparent; }
+.tab.active { border-color:#f7d632; color:#f7d632; }
+.card { background:#16213e; border-radius:10px; padding:18px; margin-bottom:12px; }
+.card h2 { font-size:16px; color:#f7d632; margin-bottom:12px; }
+.field { margin-bottom:12px; }
+.field label { display:block; font-size:13px; margin-bottom:5px; color:#ccc; }
+.field input, .field select { width:100%; padding:10px; border-radius:6px; border:1px solid #333; background:#0f0f1e; color:#fff; font-size:15px; }
+.row { display:flex; gap:10px; }
+.row .field { flex:1; }
+button.calc-btn { width:100%; padding:14px; background:#f7d632; color:#1a1a2e; border:none; border-radius:6px; font-size:15px; font-weight:bold; margin-top:5px; cursor:pointer; }
+button.calc-btn:active { background:#e0c020; }
+.result { margin-top:15px; padding:12px; background:#0f3460; border-radius:6px; font-size:14px; line-height:1.6; display:none; }
+.result.show { display:block; }
+.result strong { color:#f7d632; }
+.warning { font-size:11px; color:#ffb347; margin-top:10px; padding:8px; background:rgba(255,179,71,0.1); border-radius:5px; border-left:3px solid #ffb347; }
+.hidden { display:none; }
+.color-swatch { display:inline-block; width:30px; height:30px; border-radius:4px; vertical-align:middle; margin-right:8px; border:1px solid #555; }
+.band-row { display:flex; align-items:center; margin-bottom:8px; gap:10px; }
+.band-row label { width:80px; font-size:12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Calculadora Electrica</h1>
+  <p>Modulo 2: Motores y Conversiones | CM Contratistas Electricos</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-inom">I Nominal</div>
+  <div class="tab" id="tab-arranque">I Arranque</div>
+  <div class="tab" id="tab-overload">Overload</div>
+  <div class="tab" id="tab-conv">kW/HP/BTU</div>
+  <div class="tab" id="tab-resist">Resistencias</div>
+</div>
+
+<!-- CORRIENTE NOMINAL -->
+<div id="inom" class="card">
+  <h2>Corriente Nominal (datos de placa)</h2>
+  <div class="field">
+    <label>Tipo de motor</label>
+    <select id="inom-tipo">
+      <option value="trifasico">Trifasico</option>
+      <option value="monofasico">Monofasico</option>
+    </select>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Potencia</label>
+      <input type="number" id="inom-pot" placeholder="Ej: 5" step="any">
+    </div>
+    <div class="field">
+      <label>Unidad</label>
+      <select id="inom-unidad">
+        <option value="hp">HP</option>
+        <option value="kw">kW</option>
+      </select>
+    </div>
+  </div>
+  <div class="field">
+    <label>Voltaje de placa (V)</label>
+    <input type="number" id="inom-v" placeholder="Ej: 220" step="any">
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Factor de potencia (FP)</label>
+      <input type="number" id="inom-fp" placeholder="Ej: 0.85" step="any" value="0.85">
+    </div>
+    <div class="field">
+      <label>Eficiencia (%)</label>
+      <input type="number" id="inom-ef" placeholder="Ej: 88" step="any" value="88">
+    </div>
+  </div>
+  <button class="calc-btn" id="btn-inom">Calcular</button>
+  <div id="inom-result" class="result"></div>
+  <div class="warning">Este valor es el CONSUMO REAL del motor segun placa, NO el valor tabulado NEC 430.250 que se usa para dimensionar conductor/proteccion del circuito ramal. Si necesitas dimensionar proteccion segun codigo, usa la tabla NEC correspondiente, no este numero directamente.</div>
+</div>
+
+<!-- CORRIENTE DE ARRANQUE -->
+<div id="arranque" class="card hidden">
+  <h2>Corriente de Arranque (rotor bloqueado)</h2>
+  <div class="field">
+    <label>Corriente nominal (A)</label>
+    <input type="number" id="arr-inom" placeholder="Ej: 15.3" step="any">
+  </div>
+  <div class="field">
+    <label>Letra de codigo NEMA (factor LRC)</label>
+    <select id="arr-letra">
+      <option value="3.15">A (3.15)</option>
+      <option value="3.55">B (3.55)</option>
+      <option value="4.0">C (4.0)</option>
+      <option value="4.5">D (4.5)</option>
+      <option value="5.0">E (5.0)</option>
+      <option value="5.6">F (5.6)</option>
+      <option value="6.3">G (6.3)</option>
+      <option value="7.1">H (7.1)</option>
+      <option value="8.0">J (8.0)</option>
+      <option value="9.0">K (9.0)</option>
+      <option value="10.0">L (10.0)</option>
+      <option value="11.2">M (11.2)</option>
+      <option value="6.3" selected>Desconocido - usar 6.3 (tipico)</option>
+    </select>
+  </div>
+  <button class="calc-btn" id="btn-arranque">Calcular</button>
+  <div id="arranque-result" class="result"></div>
+  <div class="warning">La letra de codigo NEMA viene en la placa del motor (letra junto al codigo, ej "Code G"). Si no la conoces, el valor "tipico" es una estimacion y puede variar significativamente (rango real: 3.15 a 11.2+). Para dimensionar arrancadores o verificar caida de tension en arranque, usa el dato real de placa siempre que sea posible.</div>
+</div>
+
+<!-- OVERLOAD -->
+<div id="overload" class="card hidden">
+  <h2>Proteccion Termica (Overload)</h2>
+  <div class="field">
+    <label>Corriente nominal del motor (A, de placa)</label>
+    <input type="number" id="ovl-inom" placeholder="Ej: 15.3" step="any">
+  </div>
+  <div class="field">
+    <label>Factor de servicio (FS) en placa</label>
+    <select id="ovl-fs">
+      <option value="1.0">1.0 (o no especifica)</option>
+      <option value="1.15">1.15</option>
+      <option value="1.25">1.25 o mayor</option>
+    </select>
+  </div>
+  <button class="calc-btn" id="btn-overload">Calcular</button>
+  <div id="overload-result" class="result"></div>
+  <div class="warning">Basado en NEC 430.32: FS 1.0 o no especificado = maximo 115% de Iplaca. FS 1.15 o mayor, o motores con elevacion de temperatura maxima de 40C = maximo 125% de Iplaca. Estos son los limites MAXIMOS permitidos para el ajuste del overload; el ajuste real debe permitir el arranque normal sin disparar.</div>
+</div>
+
+<!-- CONVERSIONES kW/HP/BTU -->
+<div id="conv" class="card hidden">
+  <h2>Conversion kW / HP / BTU/h</h2>
+  <div class="field">
+    <label>Valor a convertir</label>
+    <input type="number" id="conv-valor" placeholder="Ej: 1.5" step="any">
+  </div>
+  <div class="field">
+    <label>Unidad de origen</label>
+    <select id="conv-unidad">
+      <option value="kw">kW</option>
+      <option value="hp">HP</option>
+      <option value="btu">BTU/h</option>
+      <option value="ton">Toneladas de refrigeracion</option>
+    </select>
+  </div>
+  <button class="calc-btn" id="btn-conv">Convertir</button>
+  <div id="conv-result" class="result"></div>
+  <div class="warning">1 HP = 745.7 W. 1 Tonelada de refrigeracion = 12,000 BTU/h = 3.517 kW. Estas son conversiones de unidades de potencia/capacidad, no consideran eficiencia de equipos reales (COP/EER).</div>
+</div>
+
+<!-- CODIGO DE COLORES RESISTENCIAS -->
+<div id="resist" class="card hidden">
+  <h2>Codigo de Colores - Resistencias</h2>
+  <div class="field">
+    <label>Numero de bandas</label>
+    <select id="res-bandas">
+      <option value="4">4 bandas</option>
+      <option value="5">5 bandas</option>
+    </select>
+  </div>
+  <div id="res-bands-container"></div>
+  <button class="calc-btn" id="btn-resist">Calcular</button>
+  <div id="resist-result" class="result"></div>
+</div>
+
+<script>
+// ===================== NAVEGACION =====================
+var tabs = {
+  'tab-inom': 'inom',
+  'tab-arranque': 'arranque',
+  'tab-overload': 'overload',
+  'tab-conv': 'conv',
+  'tab-resist': 'resist'
+};
+
+function showTab(cardId, tabBtn) {
+  var cards = document.querySelectorAll('.card');
+  for (var i = 0; i < cards.length; i++) { cards[i].classList.add('hidden'); }
+  var allTabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < allTabs.length; i++) { allTabs[i].classList.remove('active'); }
+  document.getElementById(cardId).classList.remove('hidden');
+  tabBtn.classList.add('active');
+}
+
+for (var tabId in tabs) {
+  (function(tabId, cardId) {
+    document.getElementById(tabId).onclick = function() {
+      showTab(cardId, this);
+    };
+  })(tabId, tabs[tabId]);
+}
+
+// ===================== CORRIENTE NOMINAL =====================
+document.getElementById('btn-inom').onclick = function() {
+  var tipo = document.getElementById('inom-tipo').value;
+  var pot = parseFloat(document.getElementById('inom-pot').value);
+  var unidad = document.getElementById('inom-unidad').value;
+  var V = parseFloat(document.getElementById('inom-v').value);
+  var fp = parseFloat(document.getElementById('inom-fp').value);
+  var ef = parseFloat(document.getElementById('inom-ef').value);
+  var resultDiv = document.getElementById('inom-result');
+
+  if (isNaN(pot) || isNaN(V) || isNaN(fp) || isNaN(ef)) {
+    resultDiv.innerHTML = 'Completa todos los campos con valores numericos.';
+    resultDiv.classList.add('show');
+    return;
+  }
+  if (fp <= 0 || fp > 1) {
+    resultDiv.innerHTML = 'El factor de potencia debe estar entre 0 y 1.';
+    resultDiv.classList.add('show');
+    return;
+  }
+  if (ef <= 0 || ef > 100) {
+    resultDiv.innerHTML = 'La eficiencia debe estar entre 0 y 100 (%).';
+    resultDiv.classList.add('show');
+    return;
+  }
+
+  var P_watts;
+  if (unidad === 'hp') {
+    P_watts = pot * 745.7;
+  } else {
+    P_watts = pot * 1000;
+  }
+
+  var eficiencia = ef / 100;
+  var I;
+
+  if (tipo === 'trifasico') {
+    I = P_watts / (Math.sqrt(3) * V * fp * eficiencia);
+  } else {
+    I = P_watts / (V * fp * eficiencia);
+  }
+
+  var formula = tipo === 'trifasico'
+    ? 'I = P / (raiz3 x V x FP x eficiencia)'
+    : 'I = P / (V x FP x eficiencia)';
+
+  resultDiv.innerHTML =
+    '<strong>Corriente nominal: ' + I.toFixed(2) + ' A</strong><br>' +
+    'Potencia: ' + P_watts.toFixed(1) + ' W (' + (P_watts/746).toFixed(3) + ' HP)<br>' +
+    '<small>Formula: ' + formula + '</small>';
+  resultDiv.classList.add('show');
+};
+
+// ===================== CORRIENTE DE ARRANQUE =====================
+document.getElementById('btn-arranque').onclick = function() {
+  var Inom = parseFloat(document.getElementById('arr-inom').value);
+  var factor = parseFloat(document.getElementById('arr-letra').value);
+  var resultDiv = document.getElementById('arranque-result');
+
+  if (isNaN(Inom) || Inom <= 0) {
+    resultDiv.innerHTML = 'Ingresa la corriente nominal del motor.';
+    resultDiv.classList.add('show');
+    return;
+  }
+
+  var Iarr = Inom * factor;
+
+  resultDiv.innerHTML =
+    '<strong>Corriente de arranque (LRC): ' + Iarr.toFixed(2) + ' A</strong><br>' +
+    'Factor aplicado: ' + factor + 'x<br>' +
+    '<small>I arranque = I nominal x factor LRC. Valor instantaneo durante el arranque (tipicamente 0.5 a 3 segundos).</small>';
+  resultDiv.classList.add('show');
+};
+
+// ===================== OVERLOAD =====================
+document.getElementById('btn-overload').onclick = function() {
+  var Inom = parseFloat(document.getElementById('ovl-inom').value);
+  var fs = parseFloat(document.getElementById('ovl-fs').value);
+  var resultDiv = document.getElementById('overload-result');
+
+  if (isNaN(Inom) || Inom <= 0) {
+    resultDiv.innerHTML = 'Ingresa la corriente nominal del motor.';
+    resultDiv.classList.add('show');
+    return;
+  }
+
+  var maxPct = fs >= 1.15 ? 1.25 : 1.15;
+  var Imax = Inom * maxPct;
+
+  resultDiv.innerHTML =
+    '<strong>Ajuste maximo de overload: ' + Imax.toFixed(2) + ' A</strong><br>' +
+    '(' + (maxPct*100) + '% de la corriente de placa)<br>' +
+    '<small>Iniciar el ajuste cerca de Inom (' + Inom.toFixed(2) + ' A) y aumentar gradualmente solo si el overload dispara en arranque normal, sin exceder este maximo.</small>';
+  resultDiv.classList.add('show');
+};
+
+// ===================== CONVERSIONES =====================
+document.getElementById('btn-conv').onclick = function() {
+  var valor = parseFloat(document.getElementById('conv-valor').value);
+  var unidad = document.getElementById('conv-unidad').value;
+  var resultDiv = document.getElementById('conv-result');
+
+  if (isNaN(valor)) {
+    resultDiv.innerHTML = 'Ingresa un valor numerico.';
+    resultDiv.classList.add('show');
+    return;
+  }
+
+  // Convertir todo a Watts primero
+  var watts;
+  if (unidad === 'kw') {
+    watts = valor * 1000;
+  } else if (unidad === 'hp') {
+    watts = valor * 745.7;
+  } else if (unidad === 'btu') {
+    watts = valor * 0.293071;
+  } else if (unidad === 'ton') {
+    watts = valor * 3516.85;
+  }
+
+  var kw = watts / 1000;
+  var hp = watts / 745.7;
+  var btu = watts / 0.293071;
+  var ton = watts / 3516.85;
+
+  resultDiv.innerHTML =
+    '<strong>Resultados:</strong><br>' +
+    'kW: ' + kw.toFixed(4) + '<br>' +
+    'HP: ' + hp.toFixed(4) + '<br>' +
+    'BTU/h: ' + btu.toFixed(1) + '<br>' +
+    'Toneladas de refrigeracion: ' + ton.toFixed(4);
+  resultDiv.classList.add('show');
+};
+
+// ===================== CODIGO DE COLORES RESISTENCIAS =====================
+var coloresDigito = {
+  'negro': {valor:0, color:'#000000', mult:1, tol:null},
+  'marron': {valor:1, color:'#8B4513', mult:10, tol:1},
+  'rojo': {valor:2, color:'#FF0000', mult:100, tol:2},
+  'naranja': {valor:3, color:'#FFA500', mult:1000, tol:null},
+  'amarillo': {valor:4, color:'#FFFF00', mult:10000, tol:null},
+  'verde': {valor:5, color:'#008000', mult:100000, tol:0.5},
+  'azul': {valor:6, color:'#0000FF', mult:1000000, tol:0.25},
+  'violeta': {valor:7, color:'#8A2BE2', mult:10000000, tol:0.1},
+  'gris': {valor:8, color:'#808080', mult:100000000, tol:0.05},
+  'blanco': {valor:9, color:'#FFFFFF', mult:1000000000, tol:null},
+  'dorado': {valor:null, color:'#DAA520', mult:0.1, tol:5},
+  'plateado': {valor:null, color:'#C0C0C0', mult:0.01, tol:10}
+};
+
+var ordenColores = ['negro','marron','rojo','naranja','amarillo','verde','azul','violeta','gris','blanco','dorado','plateado'];
+
+function buildResistorInputs() {
+  var bandas = document.getElementById('res-bandas').value;
+  var container = document.getElementById('res-bands-container');
+  container.innerHTML = '';
+
+  var labels;
+  if (bandas === '4') {
+    labels = ['Banda 1 (1er digito)', 'Banda 2 (2do digito)', 'Banda 3 (multiplicador)', 'Banda 4 (tolerancia)'];
+  } else {
+    labels = ['Banda 1 (1er digito)', 'Banda 2 (2do digito)', 'Banda 3 (3er digito)', 'Banda 4 (multiplicador)', 'Banda 5 (tolerancia)'];
+  }
+
+  for (var i = 0; i < labels.length; i++) {
+    var div = document.createElement('div');
+    div.className = 'band-row';
+    var label = document.createElement('label');
+    label.textContent = labels[i];
+    var select = document.createElement('select');
+    select.id = 'res-band-' + i;
+    select.style.flex = '1';
+
+    var opciones = ordenColores;
+    // Para banda de digitos (no la ultima ni multiplicador), excluir dorado/plateado
+    var esDigito = (bandas === '4' && i < 2) || (bandas === '5' && i < 3);
+    var esMultiplicador = (bandas === '4' && i === 2) || (bandas === '5' && i === 3);
+    var esTolerancia = (i === labels.length - 1);
+
+    for (var j = 0; j < opciones.length; j++) {
+      var key = opciones[j];
+      var data = coloresDigito[key];
+      if (esDigito && data.valor === null) continue;
+      if (esTolerancia && data.tol === null) continue;
+      var opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+      select.appendChild(opt);
+    }
+
+    div.appendChild(label);
+    div.appendChild(select);
+    container.appendChild(div);
+  }
+}
+
+document.getElementById('res-bandas').onchange = buildResistorInputs;
+buildResistorInputs();
+
+document.getElementById('btn-resist').onclick = function() {
+  var bandas = document.getElementById('res-bandas').value;
+  var resultDiv = document.getElementById('resist-result');
+  var valor = 0;
+  var mult, tol;
+
+  if (bandas === '4') {
+    var d1 = coloresDigito[document.getElementById('res-band-0').value].valor;
+    var d2 = coloresDigito[document.getElementById('res-band-1').value].valor;
+    mult = coloresDigito[document.getElementById('res-band-2').value].mult;
+    tol = coloresDigito[document.getElementById('res-band-3').value].tol;
+    valor = (d1 * 10 + d2) * mult;
+  } else {
+    var d1 = coloresDigito[document.getElementById('res-band-0').value].valor;
+    var d2 = coloresDigito[document.getElementById('res-band-1').value].valor;
+    var d3 = coloresDigito[document.getElementById('res-band-2').value].valor;
+    mult = coloresDigito[document.getElementById('res-band-3').value].mult;
+    tol = coloresDigito[document.getElementById('res-band-4').value].tol;
+    valor = (d1 * 100 + d2 * 10 + d3) * mult;
+  }
+
+  var unidad = 'ohm';
+  var valorMostrar = valor;
+  if (valor >= 1000000) {
+    valorMostrar = valor / 1000000;
+    unidad = 'Mohm';
+  } else if (valor >= 1000) {
+    valorMostrar = valor / 1000;
+    unidad = 'Kohm';
+  }
+
+  resultDiv.innerHTML =
+    '<strong>Valor: ' + valorMostrar.toFixed(valorMostrar % 1 === 0 ? 0 : 2) + ' ' + unidad + '</strong><br>' +
+    'Tolerancia: +/- ' + tol + '%<br>' +
+    'Rango: ' + (valor * (1 - tol/100)).toFixed(2) + ' a ' + (valor * (1 + tol/100)).toFixed(2) + ' ohm';
+  resultDiv.classList.add('show');
+};
+</script>
+
+</body>
+</html>

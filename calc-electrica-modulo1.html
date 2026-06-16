@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Eléctrica - Básicos</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background:#1a1a2e; color:#eee; padding:10px; }
+.header { text-align:center; padding:15px 0; }
+.header h1 { font-size:20px; color:#f7d632; }
+.header p { font-size:12px; color:#999; margin-top:5px; }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:15px; }
+.tab { flex:1; min-width:80px; padding:10px 5px; background:#16213e; border-radius:6px; text-align:center; font-size:12px; cursor:pointer; border:2px solid transparent; }
+.tab.active { border-color:#f7d632; color:#f7d632; }
+.card { background:#16213e; border-radius:10px; padding:18px; margin-bottom:12px; }
+.card h2 { font-size:16px; color:#f7d632; margin-bottom:12px; }
+.field { margin-bottom:12px; }
+.field label { display:block; font-size:13px; margin-bottom:5px; color:#ccc; }
+.field input, .field select { width:100%; padding:10px; border-radius:6px; border:1px solid #333; background:#0f0f1e; color:#fff; font-size:15px; }
+.row { display:flex; gap:10px; }
+.row .field { flex:1; }
+button.calc-btn { width:100%; padding:14px; background:#f7d632; color:#1a1a2e; border:none; border-radius:6px; font-size:15px; font-weight:bold; margin-top:5px; cursor:pointer; }
+button.calc-btn:active { background:#e0c020; }
+.result { margin-top:15px; padding:12px; background:#0f3460; border-radius:6px; font-size:14px; line-height:1.6; display:none; }
+.result.show { display:block; }
+.result strong { color:#f7d632; }
+.warning { font-size:11px; color:#ffb347; margin-top:10px; padding:8px; background:rgba(255,179,71,0.1); border-radius:5px; border-left:3px solid #ffb347; }
+.hidden { display:none; }
+.section-divider { font-size:12px; color:#666; margin:15px 0 8px 0; text-transform:uppercase; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ Calculadora Eléctrica</h1>
+  <p>Módulo 1: Cálculos Básicos | CM Contratistas Eléctricos</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('ohm')">Ley de Ohm</div>
+  <div class="tab" onclick="showTab('potencia')">Potencia</div>
+  <div class="tab" onclick="showTab('caida')">Caída V</div>
+  <div class="tab" onclick="showTab('calibre')">Calibre</div>
+</div>
+
+<!-- LEY DE OHM -->
+<div id="ohm" class="card">
+  <h2>Ley de Ohm</h2>
+  <div class="field">
+    <label>Calcular</label>
+    <select id="ohm-target" onchange="updateOhmFields()">
+      <option value="V">Voltaje (V)</option>
+      <option value="I">Corriente (I)</option>
+      <option value="R">Resistencia (R)</option>
+      <option value="P">Potencia (P)</option>
+    </select>
+  </div>
+  <div id="ohm-inputs"></div>
+  <button class="calc-btn" onclick="calcOhm()">Calcular</button>
+  <div id="ohm-result" class="result"></div>
+</div>
+
+<!-- POTENCIA -->
+<div id="potencia" class="card hidden">
+  <h2>Potencia Eléctrica</h2>
+  <div class="field">
+    <label>Sistema</label>
+    <select id="pot-sistema" onchange="updatePotFields()">
+      <option value="mono">Monofásico</option>
+      <option value="trifasico">Trifásico</option>
+    </select>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Voltaje (V)</label>
+      <input type="number" id="pot-v" placeholder="Ej: 240">
+    </div>
+    <div class="field">
+      <label>Corriente (A)</label>
+      <input type="number" id="pot-i" placeholder="Ej: 15">
+    </div>
+  </div>
+  <div class="field">
+    <label>Factor de potencia (FP)</label>
+    <input type="number" id="pot-fp" placeholder="Ej: 0.85 (deja vacío si es 1)" step="0.01">
+  </div>
+  <button class="calc-btn" onclick="calcPotencia()">Calcular</button>
+  <div id="pot-result" class="result"></div>
+</div>
+
+<!-- CAÍDA DE TENSIÓN -->
+<div id="caida" class="card hidden">
+  <h2>Caída de Tensión</h2>
+  <div class="field">
+    <label>Sistema</label>
+    <select id="cv-sistema">
+      <option value="mono">Monofásico (2 hilos)</option>
+      <option value="trifasico">Trifásico</option>
+    </select>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Voltaje (V)</label>
+      <input type="number" id="cv-v" placeholder="Ej: 240">
+    </div>
+    <div class="field">
+      <label>Corriente (A)</label>
+      <input type="number" id="cv-i" placeholder="Ej: 20">
+    </div>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Distancia (m, una vía)</label>
+      <input type="number" id="cv-dist" placeholder="Ej: 30">
+    </div>
+    <div class="field">
+      <label>Calibre AWG</label>
+      <select id="cv-awg">
+        <option value="14">14 AWG</option>
+        <option value="12">12 AWG</option>
+        <option value="10">10 AWG</option>
+        <option value="8">8 AWG</option>
+        <option value="6">6 AWG</option>
+        <option value="4">4 AWG</option>
+        <option value="2">2 AWG</option>
+        <option value="1">1 AWG</option>
+        <option value="1/0">1/0 AWG</option>
+        <option value="2/0">2/0 AWG</option>
+        <option value="3/0">3/0 AWG</option>
+        <option value="4/0">4/0 AWG</option>
+        <option value="250">250 kcmil</option>
+        <option value="300">300 kcmil</option>
+        <option value="350">350 kcmil</option>
+        <option value="400">400 kcmil</option>
+        <option value="500">500 kcmil</option>
+      </select>
+    </div>
+  </div>
+  <div class="field">
+    <label>Material del conductor</label>
+    <select id="cv-material">
+      <option value="cu">Cobre</option>
+      <option value="al">Aluminio</option>
+    </select>
+  </div>
+  <button class="calc-btn" onclick="calcCaidaTension()">Calcular</button>
+  <div id="cv-result" class="result"></div>
+  <div class="warning">⚠ Resultado orientativo. NEC recomienda máx. 3% en ramal y 5% total (alimentador+ramal). Verificar siempre contra tabla de ampacidad y factores de corrección por temperatura/agrupamiento (NEC 310.15).</div>
+</div>
+
+<!-- CALIBRE DE CONDUCTOR -->
+<div id="calibre" class="card hidden">
+  <h2>Selección de Calibre (estimado)</h2>
+  <div class="field">
+    <label>Corriente del circuito (A)</label>
+    <input type="number" id="cal-i" placeholder="Ej: 25">
+  </div>
+  <div class="field">
+    <label>Tipo de carga</label>
+    <select id="cal-tipo">
+      <option value="continua">Carga continua (≥3h) — factor 1.25</option>
+      <option value="no-continua">Carga no continua — factor 1.0</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Temperatura del aislamiento</label>
+    <select id="cal-temp">
+      <option value="60">60°C (TW)</option>
+      <option value="75">75°C (THW, THWN)</option>
+      <option value="90">90°C (THHN, XHHW-2)</option>
+    </select>
+  </div>
+  <button class="calc-btn" onclick="calcCalibre()">Calcular</button>
+  <div id="cal-result" class="result"></div>
+  <div class="warning">⚠ Este resultado da el calibre MÍNIMO antes de aplicar factores de corrección por temperatura ambiente y agrupamiento de conductores (NEC 310.15(B)). En instalaciones reales, SIEMPRE verificar esos factores adicionales. Esta calculadora no los aplica automáticamente.</div>
+</div>
+
+<script>
+// ===== Tabla de ampacidad NEC 310.16 (cobre y aluminio, 60/75/90°C) =====
+const ampacidad = {
+  cu: {
+    "14": {60:15, 75:20, 90:25},
+    "12": {60:20, 75:25, 90:30},
+    "10": {60:30, 75:35, 90:40},
+    "8":  {60:40, 75:50, 90:55},
+    "6":  {60:55, 75:65, 90:75},
+    "4":  {60:70, 75:85, 90:95},
+    "2":  {60:95, 75:115, 90:130},
+    "1":  {60:110, 75:130, 90:150},
+    "1/0":{60:125, 75:150, 90:170},
+    "2/0":{60:145, 75:175, 90:195},
+    "3/0":{60:165, 75:200, 90:225},
+    "4/0":{60:195, 75:230, 90:260},
+    "250":{60:215, 75:255, 90:290},
+    "300":{60:240, 75:285, 90:320},
+    "350":{60:260, 75:310, 90:350},
+    "400":{60:280, 75:335, 90:380},
+    "500":{60:320, 75:380, 90:430}
+  },
+  al: {
+    "14": {60:0, 75:0, 90:0},
+    "12": {60:15, 75:20, 90:25},
+    "10": {60:25, 75:30, 90:35},
+    "8":  {60:30, 75:40, 90:45},
+    "6":  {60:40, 75:50, 90:60},
+    "4":  {60:55, 75:65, 90:75},
+    "2":  {60:75, 75:90, 90:100},
+    "1":  {60:85, 75:100, 90:115},
+    "1/0":{60:100, 75:120, 90:135},
+    "2/0":{60:115, 75:135, 90:150},
+    "3/0":{60:130, 75:155, 90:175},
+    "4/0":{60:150, 75:180, 90:205},
+    "250":{60:170, 75:205, 90:230},
+    "300":{60:190, 75:230, 90:255},
+    "350":{60:210, 75:250, 90:280},
+    "400":{60:225, 75:270, 90:305},
+    "500":{60:260, 75:310, 90:350}
+  }
+};
+
+// Resistencia óhmica por cada 1000 ft (ida y vuelta ya considerado x2 en cálculo), ohm/1000ft, CA aprox
+const resistenciaCu = {
+  "14":3.07,"12":1.93,"10":1.21,"8":0.764,"6":0.491,"4":0.308,"2":0.194,"1":0.154,
+  "1/0":0.122,"2/0":0.0967,"3/0":0.0766,"4/0":0.0608,"250":0.0515,"300":0.0429,
+  "350":0.0367,"400":0.0321,"500":0.0258
+};
+const resistenciaAl = {
+  "14":0,"12":3.18,"10":2.00,"8":1.26,"6":0.808,"4":0.508,"2":0.319,"1":0.253,
+  "1/0":0.201,"2/0":0.159,"3/0":0.126,"4/0":0.100,"250":0.0847,"300":0.0707,
+  "350":0.0605,"400":0.0529,"500":0.0424
+};
+
+function showTab(id) {
+  document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.remove('hidden');
+  event.target.classList.add('active');
+}
+
+// ===== LEY DE OHM =====
+function updateOhmFields() {
+  const target = document.getElementById('ohm-target').value;
+  const container = document.getElementById('ohm-inputs');
+  const fields = {
+    V: [['I','Corriente (A)'], ['R','Resistencia (Ω)']],
+    I: [['V','Voltaje (V)'], ['R','Resistencia (Ω)']],
+    R: [['V','Voltaje (V)'], ['I','Corriente (A)']],
+    P: [['V','Voltaje (V)'], ['I','Corriente (A)']]
+  };
+  container.innerHTML = '';
+  fields[target].forEach(([id, label]) => {
+    container.innerHTML += `<div class="field"><label>${label}</label><input type="number" id="ohm-${id}" step="any"></div>`;
+  });
+  document.getElementById('ohm-result').classList.remove('show');
+}
+updateOhmFields();
+
+function calcOhm() {
+  const target = document.getElementById('ohm-target').value;
+  let result = '';
+  try {
+    if (target === 'V') {
+      const I = parseFloat(document.getElementById('ohm-I').value);
+      const R = parseFloat(document.getElementById('ohm-R').value);
+      const V = I * R;
+      const P = V * I;
+      result = `<strong>V = I × R = ${V.toFixed(3)} V</strong><br>Potencia asociada: P = ${P.toFixed(3)} W`;
+    } else if (target === 'I') {
+      const V = parseFloat(document.getElementById('ohm-V').value);
+      const R = parseFloat(document.getElementById('ohm-R').value);
+      const I = V / R;
+      const P = V * I;
+      result = `<strong>I = V / R = ${I.toFixed(3)} A</strong><br>Potencia asociada: P = ${P.toFixed(3)} W`;
+    } else if (target === 'R') {
+      const V = parseFloat(document.getElementById('ohm-V').value);
+      const I = parseFloat(document.getElementById('ohm-I').value);
+      const R = V / I;
+      result = `<strong>R = V / I = ${R.toFixed(3)} Ω</strong>`;
+    } else if (target === 'P') {
+      const V = parseFloat(document.getElementById('ohm-V').value);
+      const I = parseFloat(document.getElementById('ohm-I').value);
+      const P = V * I;
+      const R = V / I;
+      result = `<strong>P = V × I = ${P.toFixed(3)} W</strong><br>Resistencia equivalente: R = ${R.toFixed(3)} Ω`;
+    }
+    if (isNaN(parseFloat(result.match(/[\d.]+/)))) throw new Error();
+    document.getElementById('ohm-result').innerHTML = result;
+    document.getElementById('ohm-result').classList.add('show');
+  } catch {
+    document.getElementById('ohm-result').innerHTML = '⚠ Verifica que ingresaste todos los valores numéricos.';
+    document.getElementById('ohm-result').classList.add('show');
+  }
+}
+
+// ===== POTENCIA =====
+function calcPotencia() {
+  const sistema = document.getElementById('pot-sistema').value;
+  const V = parseFloat(document.getElementById('pot-v').value);
+  const I = parseFloat(document.getElementById('pot-i').value);
+  let fp = parseFloat(document.getElementById('pot-fp').value);
+  if (isNaN(fp)) fp = 1;
+
+  if (isNaN(V) || isNaN(I)) {
+    document.getElementById('pot-result').innerHTML = '⚠ Ingresa Voltaje y Corriente.';
+    document.getElementById('pot-result').classList.add('show');
+    return;
+  }
+
+  let Pap, Pact, Q, HP;
+  if (sistema === 'mono') {
+    Pap = V * I;
+  } else {
+    Pap = Math.sqrt(3) * V * I;
+  }
+  Pact = Pap * fp;
+  Q = Math.sqrt(Math.max(Pap*Pap - Pact*Pact, 0));
+  HP = Pact / 746;
+
+  document.getElementById('pot-result').innerHTML = `
+    <strong>Potencia Aparente (S):</strong> ${Pap.toFixed(2)} VA<br>
+    <strong>Potencia Activa (P):</strong> ${Pact.toFixed(2)} W (${(Pact/1000).toFixed(3)} kW)<br>
+    <strong>Potencia Reactiva (Q):</strong> ${Q.toFixed(2)} VAR<br>
+    Equivalente: ${HP.toFixed(3)} HP<br>
+    <small>Fórmula: ${sistema === 'mono' ? 'S = V × I' : 'S = √3 × V × I'} | P = S × FP</small>
+  `;
+  document.getElementById('pot-result').classList.add('show');
+}
+
+// ===== CAÍDA DE TENSIÓN =====
+function calcCaidaTension() {
+  const sistema = document.getElementById('cv-sistema').value;
+  const V = parseFloat(document.getElementById('cv-v').value);
+  const I = parseFloat(document.getElementById('cv-i').value);
+  const dist_m = parseFloat(document.getElementById('cv-dist').value);
+  const awg = document.getElementById('cv-awg').value;
+  const material = document.getElementById('cv-material').value;
+
+  if (isNaN(V) || isNaN(I) || isNaN(dist_m)) {
+    document.getElementById('cv-result').innerHTML = '⚠ Completa todos los campos.';
+    document.getElementById('cv-result').classList.add('show');
+    return;
+  }
+
+  const tabla = material === 'cu' ? resistenciaCu : resistenciaAl;
+  const r_ohm_1000ft = tabla[awg];
+
+  if (!r_ohm_1000ft || r_ohm_1000ft === 0) {
+    document.getElementById('cv-result').innerHTML = '⚠ Calibre no disponible para aluminio en este rango.';
+    document.getElementById('cv-result').classList.add('show');
+    return;
+  }
+
+  // Convertir distancia de metros a pies, y a ida-y-vuelta (circuito completo)
+  const dist_ft = dist_m * 3.28084;
+  const r_total_ohm = (r_ohm_1000ft / 1000) * dist_ft * 2; // x2 por ida y vuelta
+
+  let Vdrop, factor;
+  if (sistema === 'mono') {
+    Vdrop = I * r_total_ohm;
+  } else {
+    // Trifásico: factor √3 en lugar de 2
+    Vdrop = I * (r_ohm_1000ft / 1000) * dist_ft * Math.sqrt(3);
+  }
+
+  const pct = (Vdrop / V) * 100;
+  let estado = '';
+  if (pct <= 3) estado = '✅ Dentro del límite recomendado (≤3%)';
+  else if (pct <= 5) estado = '⚠ Aceptable pero alto (3-5%) — revisar si hay más carga aguas abajo';
+  else estado = '❌ EXCEDE el límite recomendado (>5%) — considerar calibre mayor';
+
+  document.getElementById('cv-result').innerHTML = `
+    <strong>Caída de tensión: ${Vdrop.toFixed(2)} V</strong><br>
+    <strong>Porcentaje: ${pct.toFixed(2)}%</strong><br>
+    Voltaje en el extremo: ${(V - Vdrop).toFixed(2)} V<br>
+    ${estado}
+  `;
+  document.getElementById('cv-result').classList.add('show');
+}
+
+// ===== CALIBRE DE CONDUCTOR =====
+function calcCalibre() {
+  const I = parseFloat(document.getElementById('cal-i').value);
+  const tipo = document.getElementById('cal-tipo').value;
+  const temp = parseInt(document.getElementById('cal-temp').value);
+
+  if (isNaN(I)) {
+    document.getElementById('cal-result').innerHTML = '⚠ Ingresa la corriente del circuito.';
+    document.getElementById('cal-result').classList.add('show');
+    return;
+  }
+
+  const factor = tipo === 'continua' ? 1.25 : 1.0;
+  const I_diseno = I * factor;
+
+  // Buscar calibre que cumpla en cobre y aluminio
+  const orden = ["14","12","10","8","6","4","2","1","1/0","2/0","3/0","4/0","250","300","350","400","500"];
+  let awg_cu = null, awg_al = null;
+  for (const cal of orden) {
+    if (!awg_cu && ampacidad.cu[cal][temp] >= I_diseno) awg_cu = cal;
+    if (!awg_al && ampacidad.al[cal][temp] >= I_diseno) awg_al = cal;
+  }
+
+  document.getElementById('cal-result').innerHTML = `
+    <strong>Corriente de diseño:</strong> ${I} A × ${factor} = ${I_diseno.toFixed(2)} A<br>
+    <strong>Calibre mínimo (Cobre):</strong> ${awg_cu ? awg_cu + ' AWG/kcmil' : 'fuera de rango'}<br>
+    <strong>Calibre mínimo (Aluminio):</strong> ${awg_al ? awg_al + ' AWG/kcmil' : 'fuera de rango'}<br>
+    <small>Basado en ampacidad NEC 310.16, aislamiento ${temp}°C, sin factores de corrección adicionales.</small>
+  `;
+  document.getElementById('cal-result').classList.add('show');
+}
+</script>
+
+</body>
+</html>
