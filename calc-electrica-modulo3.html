@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Electrica - Factor de Potencia</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background:#1a1a2e; color:#eee; padding:10px; }
+.header { text-align:center; padding:15px 0; }
+.header h1 { font-size:20px; color:#f7d632; }
+.header p { font-size:12px; color:#999; margin-top:5px; }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:15px; }
+.tab { flex:1; min-width:80px; padding:10px 5px; background:#16213e; border-radius:6px; text-align:center; font-size:11px; cursor:pointer; border:2px solid transparent; }
+.tab.active { border-color:#f7d632; color:#f7d632; }
+.card { background:#16213e; border-radius:10px; padding:18px; margin-bottom:12px; }
+.card h2 { font-size:16px; color:#f7d632; margin-bottom:6px; }
+.card .subtitulo { font-size:12px; color:#888; margin-bottom:14px; }
+.field { margin-bottom:12px; }
+.field label { display:block; font-size:13px; margin-bottom:5px; color:#ccc; }
+.field input, .field select { width:100%; padding:10px; border-radius:6px; border:1px solid #333; background:#0f0f1e; color:#fff; font-size:15px; }
+.row { display:flex; gap:10px; }
+.row .field { flex:1; }
+button.calc-btn { width:100%; padding:14px; background:#f7d632; color:#1a1a2e; border:none; border-radius:6px; font-size:15px; font-weight:bold; margin-top:5px; cursor:pointer; }
+button.calc-btn:active { background:#e0c020; }
+.result { margin-top:15px; padding:12px; background:#0f3460; border-radius:6px; font-size:14px; line-height:1.8; display:none; }
+.result.show { display:block; }
+.result strong { color:#f7d632; }
+.result .destacado { font-size:18px; color:#f7d632; font-weight:bold; }
+.warning { font-size:11px; color:#ffb347; margin-top:10px; padding:8px; background:rgba(255,179,71,0.1); border-radius:5px; border-left:3px solid #ffb347; line-height:1.5; }
+.hidden { display:none; }
+.separador { border:none; border-top:1px solid #2a2a4a; margin:15px 0; }
+.info-box { background:#0a2040; border-radius:6px; padding:12px; margin-bottom:14px; font-size:12px; color:#aaa; line-height:1.6; }
+.info-box strong { color:#f7d632; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Calculadora Electrica</h1>
+  <p>Modulo 3: Factor de Potencia | CM Contratistas Electricos</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-fp">FP actual</div>
+  <div class="tab" id="tab-kvar">kW y kVAR</div>
+  <div class="tab" id="tab-cap">Capacitores</div>
+  <div class="tab" id="tab-ref">Referencia</div>
+</div>
+
+<!-- METODO 1: FP ACTUAL Y OBJETIVO -->
+<div id="fp" class="card">
+  <h2>Metodo 1: FP actual y FP objetivo</h2>
+  <div class="subtitulo">Cuando tienes el FP medido y quieres saber cuanto kVAR necesitas para corregirlo</div>
+
+  <div class="field">
+    <label>Sistema</label>
+    <select id="fp-sistema">
+      <option value="mono">Monofasico</option>
+      <option value="tri">Trifasico</option>
+    </select>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Potencia activa (kW)</label>
+      <input type="number" id="fp-kw" placeholder="Ej: 50" step="any">
+    </div>
+    <div class="field">
+      <label>Voltaje (V)</label>
+      <input type="number" id="fp-v" placeholder="Ej: 480" step="any">
+    </div>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>FP actual (medido)</label>
+      <input type="number" id="fp-actual" placeholder="Ej: 0.72" step="any">
+    </div>
+    <div class="field">
+      <label>FP objetivo</label>
+      <input type="number" id="fp-objetivo" placeholder="Ej: 0.95" step="any" value="0.95">
+    </div>
+  </div>
+  <button class="calc-btn" id="btn-fp">Calcular</button>
+  <div id="fp-result" class="result"></div>
+  <div class="warning">El FP objetivo de 0.95 es el minimo recomendado por la mayoria de empresas distribuidoras en Panama (ENSA/EDEMET/EDECHI). Un FP menor puede generar penalizaciones en la factura electrica en clientes con medicion de demanda. Verificar con la empresa distribuidora local el limite exacto contractual.</div>
+</div>
+
+<!-- METODO 2: kW Y kVAR MEDIDOS -->
+<div id="kvar" class="card hidden">
+  <h2>Metodo 2: kW y kVAR medidos</h2>
+  <div class="subtitulo">Cuando tienes los datos directamente de un analizador de redes</div>
+
+  <div class="field">
+    <label>Sistema</label>
+    <select id="kvar-sistema">
+      <option value="mono">Monofasico</option>
+      <option value="tri">Trifasico</option>
+    </select>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Potencia activa (kW)</label>
+      <input type="number" id="kvar-kw" placeholder="Ej: 50" step="any">
+    </div>
+    <div class="field">
+      <label>Potencia reactiva (kVAR)</label>
+      <input type="number" id="kvar-kvar" placeholder="Ej: 35" step="any">
+    </div>
+  </div>
+  <div class="field">
+    <label>Voltaje (V)</label>
+    <input type="number" id="kvar-v" placeholder="Ej: 480" step="any">
+  </div>
+  <div class="field">
+    <label>FP objetivo</label>
+    <input type="number" id="kvar-objetivo" placeholder="Ej: 0.95" step="any" value="0.95">
+  </div>
+  <button class="calc-btn" id="btn-kvar">Calcular</button>
+  <div id="kvar-result" class="result"></div>
+  <div class="warning">El kVAR calculado es el necesario para CORREGIR el exceso reactivo. Si ya tienes capacitores instalados, resta su kVAR actual al resultado para saber cuanto adicional necesitas.</div>
+</div>
+
+<!-- BANCO DE CAPACITORES -->
+<div id="cap" class="card hidden">
+  <h2>Banco de Capacitores</h2>
+  <div class="subtitulo">Calcula la capacitancia necesaria y verifica capacitores existentes</div>
+
+  <div class="info-box">
+    <strong>Uso:</strong> Ingresa el kVAR que necesitas compensar (obtenido del Metodo 1 o 2) y el voltaje del sistema. La calculadora te da la capacitancia en microfaradios (uF) necesaria para ese banco.
+  </div>
+
+  <div class="field">
+    <label>Sistema</label>
+    <select id="cap-sistema">
+      <option value="mono">Monofasico</option>
+      <option value="tri">Trifasico (banco en delta)</option>
+      <option value="tri-y">Trifasico (banco en estrella)</option>
+    </select>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>kVAR a compensar</label>
+      <input type="number" id="cap-kvar" placeholder="Ej: 25" step="any">
+    </div>
+    <div class="field">
+      <label>Voltaje (V)</label>
+      <input type="number" id="cap-v" placeholder="Ej: 480" step="any">
+    </div>
+  </div>
+  <div class="field">
+    <label>Frecuencia</label>
+    <select id="cap-freq">
+      <option value="60">60 Hz (Panama, USA)</option>
+      <option value="50">50 Hz (Europa)</option>
+    </select>
+  </div>
+  <button class="calc-btn" id="btn-cap">Calcular</button>
+  <div id="cap-result" class="result"></div>
+  <div class="warning">Este calculo da la capacitancia TOTAL del banco. Para armar el banco con capacitores comerciales, selecciona capacitores cuya suma de kVAR se aproxime al valor calculado. Los capacitores para correccion de FP se especifican en kVAR, no en uF — verifica siempre el voltaje nominal del capacitor vs el voltaje del sistema (debe ser igual o mayor). No instalar capacitores en circuitos con variadores de frecuencia sin filtros apropiados.</div>
+</div>
+
+<!-- TABLA DE REFERENCIA -->
+<div id="ref" class="card hidden">
+  <h2>Referencia Rapida de FP</h2>
+  <div class="subtitulo">Valores tipicos de factor de potencia por tipo de carga</div>
+
+  <div class="info-box">
+    <strong>Cargas inductivas tipicas:</strong><br>
+    Motor electrico en plena carga: 0.85 - 0.92<br>
+    Motor en carga parcial (50%): 0.70 - 0.80<br>
+    Motor en vacio: 0.15 - 0.30<br>
+    Transformador en vacio: 0.10 - 0.15<br>
+    Soldador electrico: 0.35 - 0.60<br>
+    Horno de induccion: 0.60 - 0.85<br>
+    Fluorescente sin compensar: 0.50 - 0.60<br>
+    Fluorescente compensado: 0.90 - 0.95
+  </div>
+
+  <div class="info-box">
+    <strong>Cargas resistivas (FP = 1.0):</strong><br>
+    Resistencias de calefaccion<br>
+    Lamparas incandescentes<br>
+    Hornos de resistencia
+  </div>
+
+  <div class="info-box">
+    <strong>Cargas capacitivas (FP adelantado):</strong><br>
+    Bancos de capacitores sobrecompensados<br>
+    Lineas en vacio<br>
+    Motores sincrónicos sobreexcitados
+  </div>
+
+  <div class="info-box">
+    <strong>Limites tipicos Panama:</strong><br>
+    ENSA/EDEMET/EDECHI exigen FP minimo de 0.90 - 0.95 en clientes con medicion de demanda. Por debajo se aplican penalizaciones en la factura. Verificar siempre el contrato especifico del cliente con la distribuidora.
+  </div>
+
+  <div class="info-box">
+    <strong>Regla practica:</strong><br>
+    Un FP de 0.70 significa que estas consumiendo 43% mas corriente de la que realmente necesitas para hacer el mismo trabajo util. Corregir a 0.95 reduce esa corriente excesiva a solo 5%, lo que baja la factura y reduce la carga en conductores y transformadores.
+  </div>
+</div>
+
+<script>
+// ===== NAVEGACION =====
+var tabMap = {
+  'tab-fp': 'fp',
+  'tab-kvar': 'kvar',
+  'tab-cap': 'cap',
+  'tab-ref': 'ref'
+};
+
+for (var tabId in tabMap) {
+  (function(tid, cid) {
+    document.getElementById(tid).onclick = function() {
+      var cards = document.querySelectorAll('.card');
+      for (var i = 0; i < cards.length; i++) { cards[i].classList.add('hidden'); }
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) { tabs[i].classList.remove('active'); }
+      document.getElementById(cid).classList.remove('hidden');
+      this.classList.add('active');
+    };
+  })(tabId, tabMap[tabId]);
+}
+
+// ===== METODO 1: FP ACTUAL Y OBJETIVO =====
+document.getElementById('btn-fp').onclick = function() {
+  var kw = parseFloat(document.getElementById('fp-kw').value);
+  var v = parseFloat(document.getElementById('fp-v').value);
+  var fp1 = parseFloat(document.getElementById('fp-actual').value);
+  var fp2 = parseFloat(document.getElementById('fp-objetivo').value);
+  var sistema = document.getElementById('fp-sistema').value;
+  var res = document.getElementById('fp-result');
+
+  if (isNaN(kw) || isNaN(v) || isNaN(fp1) || isNaN(fp2)) {
+    res.innerHTML = 'Completa todos los campos.'; res.classList.add('show'); return;
+  }
+  if (fp1 <= 0 || fp1 >= 1 || fp2 <= 0 || fp2 > 1) {
+    res.innerHTML = 'FP debe estar entre 0 y 1 (no incluye 0).'; res.classList.add('show'); return;
+  }
+  if (fp1 >= fp2) {
+    res.innerHTML = 'El FP actual ya es igual o mejor que el objetivo. No se necesita compensacion.'; res.classList.add('show'); return;
+  }
+
+  var tan1 = Math.tan(Math.acos(fp1));
+  var tan2 = Math.tan(Math.acos(fp2));
+  var kvar_necesario = kw * (tan1 - tan2);
+
+  var kva_actual = kw / fp1;
+  var kva_nuevo = kw / fp2;
+  var kvar_actual = Math.sqrt(kva_actual*kva_actual - kw*kw);
+
+  var I_actual, I_nuevo;
+  if (sistema === 'tri') {
+    I_actual = (kva_actual * 1000) / (Math.sqrt(3) * v);
+    I_nuevo = (kva_nuevo * 1000) / (Math.sqrt(3) * v);
+  } else {
+    I_actual = (kva_actual * 1000) / v;
+    I_nuevo = (kva_nuevo * 1000) / v;
+  }
+
+  var ahorro_I = ((I_actual - I_nuevo) / I_actual * 100);
+
+  res.innerHTML =
+    '<span class="destacado">kVAR necesario: ' + kvar_necesario.toFixed(2) + ' kVAR</span><br><br>' +
+    '<strong>Situacion actual:</strong><br>' +
+    'kVA actual: ' + kva_actual.toFixed(2) + ' kVA<br>' +
+    'kVAR actual: ' + kvar_actual.toFixed(2) + ' kVAR<br>' +
+    'Corriente actual: ' + I_actual.toFixed(2) + ' A<br><br>' +
+    '<strong>Despues de la correccion:</strong><br>' +
+    'kVA nuevo: ' + kva_nuevo.toFixed(2) + ' kVA<br>' +
+    'Corriente nueva: ' + I_nuevo.toFixed(2) + ' A<br>' +
+    'Reduccion de corriente: ' + ahorro_I.toFixed(1) + '%<br><br>' +
+    '<small>Usa la pestana "Capacitores" para calcular la capacitancia del banco con estos ' + kvar_necesario.toFixed(2) + ' kVAR.</small>';
+  res.classList.add('show');
+};
+
+// ===== METODO 2: kW Y kVAR MEDIDOS =====
+document.getElementById('btn-kvar').onclick = function() {
+  var kw = parseFloat(document.getElementById('kvar-kw').value);
+  var kvar = parseFloat(document.getElementById('kvar-kvar').value);
+  var v = parseFloat(document.getElementById('kvar-v').value);
+  var fp2 = parseFloat(document.getElementById('kvar-objetivo').value);
+  var sistema = document.getElementById('kvar-sistema').value;
+  var res = document.getElementById('kvar-result');
+
+  if (isNaN(kw) || isNaN(kvar) || isNaN(v) || isNaN(fp2)) {
+    res.innerHTML = 'Completa todos los campos.'; res.classList.add('show'); return;
+  }
+
+  var kva_actual = Math.sqrt(kw*kw + kvar*kvar);
+  var fp_actual = kw / kva_actual;
+  var tan2 = Math.tan(Math.acos(fp2));
+  var kvar_objetivo = kw * tan2;
+  var kvar_compensar = kvar - kvar_objetivo;
+
+  var I_actual, I_nuevo;
+  var kva_nuevo = kw / fp2;
+  if (sistema === 'tri') {
+    I_actual = (kva_actual * 1000) / (Math.sqrt(3) * v);
+    I_nuevo = (kva_nuevo * 1000) / (Math.sqrt(3) * v);
+  } else {
+    I_actual = (kva_actual * 1000) / v;
+    I_nuevo = (kva_nuevo * 1000) / v;
+  }
+
+  if (kvar_compensar <= 0) {
+    res.innerHTML = 'El FP actual (' + fp_actual.toFixed(3) + ') ya cumple o supera el objetivo. No se necesita compensacion.';
+    res.classList.add('show'); return;
+  }
+
+  res.innerHTML =
+    '<strong>FP actual calculado: ' + fp_actual.toFixed(3) + '</strong><br>' +
+    'kVA actual: ' + kva_actual.toFixed(2) + ' kVA<br>' +
+    'Corriente actual: ' + I_actual.toFixed(2) + ' A<br><br>' +
+    '<span class="destacado">kVAR a compensar: ' + kvar_compensar.toFixed(2) + ' kVAR</span><br><br>' +
+    '<strong>Despues de la correccion a FP ' + fp2 + ':</strong><br>' +
+    'kVAR residual: ' + kvar_objetivo.toFixed(2) + ' kVAR<br>' +
+    'Corriente nueva: ' + I_nuevo.toFixed(2) + ' A<br>' +
+    'Reduccion de corriente: ' + ((I_actual - I_nuevo)/I_actual*100).toFixed(1) + '%<br><br>' +
+    '<small>Usa la pestana "Capacitores" con ' + kvar_compensar.toFixed(2) + ' kVAR para calcular la capacitancia del banco.</small>';
+  res.classList.add('show');
+};
+
+// ===== BANCO DE CAPACITORES =====
+document.getElementById('btn-cap').onclick = function() {
+  var kvar = parseFloat(document.getElementById('cap-kvar').value);
+  var v = parseFloat(document.getElementById('cap-v').value);
+  var freq = parseFloat(document.getElementById('cap-freq').value);
+  var sistema = document.getElementById('cap-sistema').value;
+  var res = document.getElementById('cap-result');
+
+  if (isNaN(kvar) || isNaN(v) || kvar <= 0 || v <= 0) {
+    res.innerHTML = 'Ingresa kVAR y voltaje validos.'; res.classList.add('show'); return;
+  }
+
+  var w = 2 * Math.PI * freq;
+  var C_uF, detalle;
+
+  if (sistema === 'mono') {
+    // C = Q / (w * V^2)
+    var Q = kvar * 1000;
+    C_uF = (Q / (w * v * v)) * 1e6;
+    detalle = 'Monofasico: C = Q / (2*pi*f*V^2)';
+  } else if (sistema === 'tri') {
+    // Delta: C por fase = Q / (3 * w * V^2)
+    var Q = kvar * 1000;
+    C_uF = (Q / (3 * w * v * v)) * 1e6;
+    detalle = 'Trifasico delta: C por fase = Q / (3*2*pi*f*V^2) — voltaje de fase = voltaje de linea';
+  } else {
+    // Estrella: C por fase = Q / (w * V_fase^2) donde V_fase = V/sqrt(3)
+    var Q = kvar * 1000;
+    var v_fase = v / Math.sqrt(3);
+    C_uF = (Q / (3 * w * v_fase * v_fase)) * 1e6;
+    detalle = 'Trifasico estrella: C por fase = Q / (3*2*pi*f*Vfase^2) — Vfase = ' + v_fase.toFixed(1) + ' V';
+  }
+
+  var I_cap;
+  if (sistema === 'mono') {
+    I_cap = (kvar * 1000) / v;
+  } else {
+    I_cap = (kvar * 1000) / (Math.sqrt(3) * v);
+  }
+
+  res.innerHTML =
+    '<span class="destacado">Capacitancia: ' + C_uF.toFixed(2) + ' uF</span>' +
+    (sistema !== 'mono' ? ' por fase' : '') + '<br><br>' +
+    '<strong>Corriente por el banco: ' + I_cap.toFixed(2) + ' A</strong><br><br>' +
+    'Voltaje nominal del capacitor: minimo ' + v + ' V<br>' +
+    'Frecuencia: ' + freq + ' Hz<br>' +
+    '<small>' + detalle + '</small>';
+  res.classList.add('show');
+};
+</script>
+
+</body>
+</html>
