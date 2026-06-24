@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Electrica - CM Contratistas</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background:#1a1a2e; color:#eee; padding:20px; min-height:100vh; display:flex; flex-direction:column; }
+.header { text-align:center; padding:30px 0 40px 0; }
+.logo { font-size:40px; margin-bottom:10px; }
+.header h1 { font-size:22px; color:#f7d632; margin-bottom:6px; }
+.header h2 { font-size:14px; color:#f7d632; font-weight:normal; margin-bottom:8px; }
+.header p { font-size:12px; color:#777; }
+.menu { display:flex; flex-direction:column; gap:14px; max-width:420px; margin:0 auto; width:100%; flex:1; }
+.menu a {
+  display:block;
+  background:#16213e;
+  color:#eee;
+  text-decoration:none;
+  padding:20px;
+  border-radius:10px;
+  border:2px solid transparent;
+}
+.menu a:active { border-color:#f7d632; background:#1c2b4e; }
+.menu a .num { font-size:11px; color:#777; margin-bottom:4px; display:block; }
+.menu a .titulo { font-size:17px; font-weight:bold; color:#f7d632; margin-bottom:6px; display:block; }
+.menu a .temas { font-size:12px; color:#aaa; line-height:1.5; }
+.menu a.disabled { opacity:0.35; pointer-events:none; }
+.badge { display:inline-block; font-size:10px; background:#f7d632; color:#1a1a2e; padding:2px 7px; border-radius:10px; font-weight:bold; margin-left:8px; vertical-align:middle; }
+.badge.pronto { background:#333; color:#777; }
+.footer { text-align:center; font-size:11px; color:#555; padding-top:30px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">&#9889;</div>
+  <h1>CM Contratistas Electricos</h1>
+  <h2>Calculadora Electrica de Campo</h2>
+  <p>Herramienta de apoyo tecnico | Uso personal</p>
+</div>
+
+<div class="menu">
+
+  <a href="calc-electrica-modulo1.html">
+    <span class="num">MODULO 1</span>
+    <span class="titulo">Calculos Basicos <span class="badge">Activo</span></span>
+    <span class="temas">
+      Ley de Ohm &nbsp;|&nbsp; Potencia mono/trifasico<br>
+      Caida de tension &nbsp;|&nbsp; Seleccion de calibre AWG
+    </span>
+  </a>
+
+  <a href="calc-electrica-modulo2.html">
+    <span class="num">MODULO 2</span>
+    <span class="titulo">Motores y Conversiones <span class="badge">Activo</span></span>
+    <span class="temas">
+      Corriente nominal (placa) &nbsp;|&nbsp; Corriente de arranque<br>
+      Overload NEC 430.32 &nbsp;|&nbsp; kW / HP / BTU<br>
+      Codigo de colores de resistencias
+    </span>
+  </a>
+
+  <a href="calc-electrica-modulo3.html">
+    <span class="num">MODULO 3</span>
+    <span class="titulo">Factor de Potencia <span class="badge">Activo</span></span>
+    <span class="temas">
+      Correccion por FP actual y objetivo<br>
+      Calculo por kW y kVAR medidos<br>
+      Banco de capacitores &nbsp;|&nbsp; Tabla de referencia
+    </span>
+  </a>
+
+  <a class="disabled">
+    <span class="num">MODULO 4</span>
+    <span class="titulo">Transformadores <span class="badge pronto">Proximamente</span></span>
+    <span class="temas">
+      Corriente primaria/secundaria &nbsp;|&nbsp; Relacion de transformacion<br>
+      Dimensionamiento y %Z
+    </span>
+  </a>
+
+</div>
+
+<div class="footer">
+  CM Contratistas Electricos &nbsp;|&nbsp; Panama<br>
+  camnti1030@gmail.com<br>
+  Tel: 66511226<br><br>
+  Herramienta de apoyo tecnico. No sustituye<br>
+  verificacion contra normativa NEC vigente.
+</div>
+
+</body>
+</html>
